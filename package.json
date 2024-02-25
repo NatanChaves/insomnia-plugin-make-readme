@@ -1,0 +1,19 @@
+{
+  "name": "readme-maker", 
+  "version": "1.0.0",              
+  "main": "main.js",                
+  "insomnia": {
+    "name": "insomnia-plugin-make-readme",                                                      
+    "displayName": "Readme Maker",                                        
+    "description": "Plugin para criar readme dos endpoints a partir de suas requests", 
+    "publisher": {
+      "name": "Natan Inacio",
+      "icon": ""
+    },
+
+    "unlisted": false 
+  },
+
+  "dependencies": {},
+  "devDependencies": {}
+}
