@@ -1,23 +1,14 @@
-
 let urlPrincipal;
 
 // Função para validar a obrigatoriedade de cada parâmetro
 const validateParameters = async (contextxRequest, request) => {
-  const parameters = removeDuplicatedParameters(request.parameters);
-  let urlSemTratamento = request.url;
-  var enviromentVariable = getVariableName(urlSemTratamento);
+  const parameters = request.parameters;
 
   const requiredParameters = [];
 
   for (let i = 0; i < parameters.length; i++) {
     module.exports.requestHooks = [
       (context) => {
-        if (urlPrincipal != "") {
-          this.urlPrincipal = replaceHost(
-            context.request.getEnvironmentVariable(enviromentVariable),
-            urlSemTratamento
-          );
-        }
         context.request.removeParameter(parameters[i].name);
       },
     ];
@@ -26,16 +17,21 @@ const validateParameters = async (contextxRequest, request) => {
 
     if (response.statusCode > 399 && response.statusCode < 500) {
       requiredParameters.push(parameters[i].name);
-
-      module.exports.requestHooks = [
-        (context) => {
-          context.request.setParameter(parameters[i].name, parameters[i].value);
-        },
-      ];
     }
+
+    module.exports.requestHooks = [
+      (context) => {
+        context.request.setParameter(parameters[i].name, parameters[i].value);
+      },
+    ];
   }
-  
   return requiredParameters;
+};
+
+const setUrlParameter = (request) => {
+    if (urlPrincipal != "") {
+      this.urlPrincipal = request.url;
+    }
 };
 
 //subistitui variavel por valor
@@ -48,10 +44,10 @@ const replaceHost = (variavel, request) => {
 //identifica quais campos sao obrigatorios
 const addRequiredParamColumn = (parameters, requiredParameters) => {
   parameters.forEach((item) => {
-    item.required = "Não";
+    item.obrigatorio = "Não";
 
     if (requiredParameters.includes(item.name)) {
-      item.required = "Sim";
+      item.obrigatorio = "Sim";
     }
   });
 
@@ -120,25 +116,35 @@ const removerCaracteresEspeciais = (str) => {
 };
 
 // Função para gerar a string HTML para a caixa de diálogo
-const generateHtml = (request, endpoint, headers, parametros) => {
+const generateHtml = (request, endpoint, headers, parametros, body) => {
+  let parametrosSection = "";
+  let bodySection = "";
+
+  if (parametros != "") {
+    parametrosSection = `## Filtros: <br> ${parametros}  <br><br>`;
+  }
+  if (body != "") {
+    bodySection = `## Body: <br> \`\`\`json <br> ${body} <br> \`\`\` <br><br>`;
+  }
+
   return `
         ### Descricao do endpoint detalhando quais dados são retornados ou operações que ele realiza  <br><br>
         ## Url completa: <br> ${this.urlPrincipal}. <br><br>
         ## Endpoint: <br> ${endpoint}. <br><br>
         ## Method: <br> ${request.method}. <br><br>
         ## Headers: <br> ${headers}  <br>
-        ## Filtros: <br> ${parametros}  <br><br>
+        ${parametrosSection}
+        ${bodySection}
         ## Examples: <br> \`\`\` \`\`\`  <br>
     `;
 };
 
 const getVariableName = (value) => {
   const regex = /\{\{(.*?)\}\}/;
-  console.log(value.match(regex));
   let chave;
 
-  if(value.match(regex) != null){
-   chave = value.match(regex)[1];
+  if (value.match(regex) != null) {
+    chave = value.match(regex)[1];
   }
 
   return chave;
@@ -147,35 +153,60 @@ const getVariableName = (value) => {
 // Função principal para gerar a caixa de diálogo Readme
 const generateReadmeDialog = async (contextxRequest, data) => {
   const { request } = data;
-  const requiredParameters = addRequiredParamColumn(
-    removeDuplicatedParameters(request.parameters),
-    await validateParameters(contextxRequest, request)
-  );
+  this.urlPrincipal = request.url
+  let requiredParameters = [];
+  let parametrosTable = "";
+  let body = "";
 
-  addDescriptionParamColumn(requiredParameters);
+  if (request.method == "GET") {
+    requiredParameters = addRequiredParamColumn(
+      request.parameters,
+      await validateParameters(contextxRequest, request)
+    );
+
+    addDescriptionParamColumn(requiredParameters);
+
+    parametrosTable = generateTable(requiredParameters, [
+      "name",
+      "value",
+      "descrição",
+      "obrigatório",
+    ]);
+  }
+
+  if (request.method == "POST") {
+    setUrlParameter(request);
+    body = request.body.text;
+    console.log(body)
+  }
+
+  if (request.method == "PUT") {
+    setUrlParameter(request);
+    body = request.body.text;
+  }
 
   const regex = /https?:\/\/[^\/]+(\/[^?#]*)/;
   const match = this.urlPrincipal.match(regex);
   const endpoint = match && match[1];
 
-  const parametrosTable = generateTable(
-    requiredParameters,
-    ["name", "value", "descrição", "obrigatório"],
-    "param"
-  );
-  const headersTable = generateTable(
-    request.headers,
-    ["name", "value"],
-    "header"
+  const headersTable = generateTable(request.headers, ["name", "value"]);
+
+  const html = generateHtml(
+    request,
+    endpoint,
+    headersTable,
+    parametrosTable,
+    body
   );
 
-  const html = generateHtml(request, endpoint, headersTable, parametrosTable);
-
-  const code = document.createElement("code");
+  let code = document.createElement("code");
   code.innerHTML = html;
   code.style.userSelect = "all";
 
   contextxRequest.app.dialog(`Readme`, code);
+
+  this.urlPrincipal = "";
+  code = "";
 };
 
 //Inicia action do plugin
