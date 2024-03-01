@@ -2,7 +2,7 @@ let urlPrincipal;
 
 // Função para validar a obrigatoriedade de cada parâmetro
 const validateParameters = async (contextxRequest, request) => {
-  const parameters = request.parameters;
+  const parameters = request.parameters.filter(objeto => objeto.disabled === false);;
 
   const requiredParameters = [];
 
@@ -17,14 +17,15 @@ const validateParameters = async (contextxRequest, request) => {
 
     if (response.statusCode > 399 && response.statusCode < 500) {
       requiredParameters.push(parameters[i].name);
-    }
 
-    module.exports.requestHooks = [
-      (context) => {
-        context.request.setParameter(parameters[i].name, parameters[i].value);
-      },
-    ];
+      module.exports.requestHooks = [
+        (context) => {
+          context.request.setParameter(parameters[i].name, parameters[i].value);
+        },
+      ];
+    }
   }
+  console.log(parameters);
   return requiredParameters;
 };
 
@@ -120,17 +121,19 @@ const generateHtml = (request, endpoint, headers, parametros, body) => {
   let parametrosSection = "";
   let bodySection = "";
 
-  if (parametros != "") {
+  if (parametros != "" && request.method == "GET") {
     parametrosSection = `## Filtros: <br> ${parametros}  <br><br>`;
   }
+
   if (body != "") {
+    console.log(typeof body)
     bodySection = `## Body: <br> \`\`\`json <br> ${body} <br> \`\`\` <br><br>`;
   }
 
   return `
         ### Descricao do endpoint detalhando quais dados são retornados ou operações que ele realiza  <br><br>
         ## Url completa: <br> ${this.urlPrincipal}. <br><br>
-        ## Endpoint: <br> ${endpoint}. <br><br>
+        ## Path: <br> ${endpoint}. <br><br>
         ## Method: <br> ${request.method}. <br><br>
         ## Headers: <br> ${headers}  <br>
         ${parametrosSection}
@@ -177,12 +180,15 @@ const generateReadmeDialog = async (contextxRequest, data) => {
   if (request.method == "POST") {
     setUrlParameter(request);
     body = request.body.text;
-    console.log(body)
   }
 
   if (request.method == "PUT") {
     setUrlParameter(request);
     body = request.body.text;
+  }
+  
+  if (request.method == "DELETE") {
+    setUrlParameter(request);
   }
 
   const regex = /https?:\/\/[^\/]+(\/[^?#]*)/;
@@ -207,6 +213,7 @@ const generateReadmeDialog = async (contextxRequest, data) => {
 
   this.urlPrincipal = "";
   code = "";
+  request.parameters = request.parameters;
 };
 
 //Inicia action do plugin
