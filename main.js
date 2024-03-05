@@ -1,12 +1,17 @@
-let urlPrincipal;
+class ReadmeGenerator {
+  constructor() {
+    this.urlPrincipal = "";
+  }
 
 // Função para validar a obrigatoriedade de cada parâmetro
-const validateParameters = async (contextxRequest, request) => {
-  const parameters = request.parameters.filter(objeto => objeto.disabled === false);;
-
+ validateParameters = async (contextxRequest, request) => {
+  const parameters = request.parameters.filter(objeto => objeto.disabled == false);
+  
   const requiredParameters = [];
 
   for (let i = 0; i < parameters.length; i++) {
+
+    
     module.exports.requestHooks = [
       (context) => {
         context.request.removeParameter(parameters[i].name);
@@ -25,25 +30,26 @@ const validateParameters = async (contextxRequest, request) => {
       ];
     }
   }
-  console.log(parameters);
+  console.log(requiredParameters)
   return requiredParameters;
 };
 
-const setUrlParameter = (request) => {
-    if (urlPrincipal != "") {
+ setUrlParameter = (request) => {
+    if (this.urlPrincipal != "") {
       this.urlPrincipal = request.url;
     }
 };
 
 //subistitui variavel por valor
-const replaceHost = (variavel, request) => {
-  var url = request;
-  const regex = /\{\{(.*?)\}\}/g;
-  return url.replace(regex, variavel);
-};
+//  replaceHost = (variavel, request) => {
+//   var url = request;
+//   const regex = /\{\{(.*?)\}\}/g;
+//   return url.replace(regex, variavel);
+// };
 
 //identifica quais campos sao obrigatorios
-const addRequiredParamColumn = (parameters, requiredParameters) => {
+ addRequiredParamColumn = (parameters, requiredParameters) => {
+
   parameters.forEach((item) => {
     item.obrigatorio = "Não";
 
@@ -56,47 +62,47 @@ const addRequiredParamColumn = (parameters, requiredParameters) => {
 };
 
 //adiciona coluna de descricao
-const addDescriptionParamColumn = (parameters) => {
+ addDescriptionParamColumn = (parameters) => {
   parameters.forEach((element) => {
     element.descricao = "Descricao do campo explicando sua funcionalidade";
   });
 };
 
 //remove parametros obrigatorios
-const removeDuplicatedParameters = (arrayDeObjetos) => {
-  const chavesVistas = new Set();
-  const arraySemDuplicatas = [];
+//  removeDuplicatedParameters = (arrayDeObjetos) => {
+//   const chavesVistas = new Set();
+//   const arraySemDuplicatas = [];
 
-  for (const objeto of arrayDeObjetos) {
-    // Verificar cada chave do objeto
-    const chavesObjeto = Object.keys(objeto);
+//   for (const objeto of arrayDeObjetos) {
+//     // Verificar cada chave do objeto
+//     const chavesObjeto = Object.keys(objeto);
 
-    // Verificar se há alguma chave duplicada
-    const chaveDuplicada = chavesObjeto.some((chave) =>
-      chavesVistas.has(chave)
-    );
+//     // Verificar se há alguma chave duplicada
+//     const chaveDuplicada = chavesObjeto.some((chave) =>
+//       chavesVistas.has(chave)
+//     );
 
-    if (!chaveDuplicada) {
-      // Adicionar as chaves do objeto ao conjunto
-      chavesObjeto.forEach((chave) => chavesVistas.add(chave));
+//     if (!chaveDuplicada) {
+//       // Adicionar as chaves do objeto ao conjunto
+//       chavesObjeto.forEach((chave) => chavesVistas.add(chave));
 
-      // Adicionar o objeto ao novo array
-      arraySemDuplicatas.push(objeto);
-    }
-  }
+//       // Adicionar o objeto ao novo array
+//       arraySemDuplicatas.push(objeto);
+//     }
+//   }
 
-  return arraySemDuplicatas;
-};
+//   return arraySemDuplicatas;
+// };
 
 // Função para gerar uma tabela Markdown
-const generateTable = (items, columns) => {
+ generateTable = (items, columns) => {
   let table = `| ${columns.join(" | ")} | <br> | ${"------ | ".repeat(
     columns.length
   )} <br>`;
 
   items.forEach((item) => {
     table += `| ${columns
-      .map((column) => item[removerCaracteresEspeciais(column)])
+      .map((column) => item[this.removerCaracteresEspeciais(column)])
       .join(" | ")} | <br>`;
   });
 
@@ -104,7 +110,7 @@ const generateTable = (items, columns) => {
 };
 
 //remove caracteres especiais para conseguir adicionar valores conforme nome da coluna
-const removerCaracteresEspeciais = (str) => {
+ removerCaracteresEspeciais = (str) => {
   // Normaliza a string para remover acentos e caracteres especiais
   const stringNormalizada = str
     .normalize("NFD")
@@ -117,7 +123,7 @@ const removerCaracteresEspeciais = (str) => {
 };
 
 // Função para gerar a string HTML para a caixa de diálogo
-const generateHtml = (request, endpoint, headers, parametros, body) => {
+ generateHtml = (request, endpoint, headers, parametros, body) => {
   let parametrosSection = "";
   let bodySection = "";
 
@@ -126,7 +132,6 @@ const generateHtml = (request, endpoint, headers, parametros, body) => {
   }
 
   if (body != "") {
-    console.log(typeof body)
     bodySection = `## Body: <br> \`\`\`json <br> ${body} <br> \`\`\` <br><br>`;
   }
 
@@ -142,19 +147,19 @@ const generateHtml = (request, endpoint, headers, parametros, body) => {
     `;
 };
 
-const getVariableName = (value) => {
-  const regex = /\{\{(.*?)\}\}/;
-  let chave;
+//  getVariableName = (value) => {
+//   const regex = /\{\{(.*?)\}\}/;
+//   let chave;
 
-  if (value.match(regex) != null) {
-    chave = value.match(regex)[1];
-  }
+//   if (value.match(regex) != null) {
+//     chave = value.match(regex)[1];
+//   }
 
-  return chave;
-};
+//   return chave;
+// };
 
 // Função principal para gerar a caixa de diálogo Readme
-const generateReadmeDialog = async (contextxRequest, data) => {
+ generateReadmeDialog = async (contextxRequest, data) => {
   const { request } = data;
   this.urlPrincipal = request.url
   let requiredParameters = [];
@@ -162,42 +167,43 @@ const generateReadmeDialog = async (contextxRequest, data) => {
   let body = "";
 
   if (request.method == "GET") {
-    requiredParameters = addRequiredParamColumn(
-      request.parameters,
-      await validateParameters(contextxRequest, request)
+    requiredParameters = this.addRequiredParamColumn(
+      request.parameters.filter(objeto => objeto.disabled == false),
+      await this.validateParameters(contextxRequest, request)
     );
 
-    addDescriptionParamColumn(requiredParameters);
+    this.addDescriptionParamColumn(requiredParameters);
 
-    parametrosTable = generateTable(requiredParameters, [
+    parametrosTable = this.generateTable(requiredParameters, [
       "name",
       "value",
       "descrição",
       "obrigatório",
+      "Valores esperados"
     ]);
   }
 
   if (request.method == "POST") {
-    setUrlParameter(request);
+    this.setUrlParameter(request);
     body = request.body.text;
   }
 
   if (request.method == "PUT") {
-    setUrlParameter(request);
+    this.setUrlParameter(request);
     body = request.body.text;
   }
   
   if (request.method == "DELETE") {
-    setUrlParameter(request);
+    this.setUrlParameter(request);
   }
 
   const regex = /https?:\/\/[^\/]+(\/[^?#]*)/;
   const match = this.urlPrincipal.match(regex);
   const endpoint = match && match[1];
 
-  const headersTable = generateTable(request.headers, ["name", "value"]);
+  const headersTable = this.generateTable(request.headers, ["name", "value"]);
 
-  const html = generateHtml(
+  const html = this.generateHtml(
     request,
     endpoint,
     headersTable,
@@ -215,11 +221,15 @@ const generateReadmeDialog = async (contextxRequest, data) => {
   code = "";
   request.parameters = request.parameters;
 };
+}
 
-//Inicia action do plugin
+// Criando uma instância da classe ReadmeGenerator
+const readmeGenerator = new ReadmeGenerator();
+
+// Iniciando action do plugin
 module.exports.requestActions = [
   {
     label: "Generate Read.me",
-    action: generateReadmeDialog,
+    action: (contextxRequest, data) => readmeGenerator.generateReadmeDialog(contextxRequest, data),
   },
 ];
