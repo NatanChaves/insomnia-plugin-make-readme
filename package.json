@@ -1,6 +1,6 @@
 {
   "name": "insomnia-plugin-make-readme",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "main": "main.js",
   "insomnia": {
     "name": "insomnia-plugin-make-readme",
