@@ -6,9 +6,11 @@ Readme Maker é um plugin para o Insomnia que transforma requisições e gera RE
 
 ## Recursos
 
-- **Transformação de Requisições:** Transforme facilmente suas requisições POST, GET ou PUT em um README formatado.
+- **Transformação de Requisições:** Transforme facilmente suas requisições POST, GET, PUT ou DELETE em um README formatado.
 
-- **Validação de Parâmetros:** Valide parâmetros obrigatórios em requisições GET com base no código de status da resposta (400 a 499).
+- **Validação de Parâmetros:** Valide parâmetros obrigatórios em requisições GET com base no código de status da resposta Bad Request (400).
+
+- **Readme completo por Pasta:** Transforme todas requests de uma pasta em um readme completo pronto para ser usado.
 
 ## Instalação
 
@@ -21,11 +23,11 @@ Readme Maker é um plugin para o Insomnia que transforma requisições e gera RE
 ### Transformação de Requisições
 
 1. Abra a requisição que deseja transformar.
-2. Encontre e execute "Generate Read.me" na barra de ferramentas da request do Insomnia.
+2. Encontre e execute "Generate Read.me" na barra de ferramentas da request ou da pasta no insomnia.
 3. O README transformado será gerado.
 
 ### Validação de Parâmetros (Requisições GET)
 
 1. Para requisições GET, o plugin valida automaticamente parâmetros obrigatórios.
-2. Verifique o código de status da resposta (400 a 499) para informações sobre parâmetros ausentes.
+2. Verifique o código de status da resposta Bad Request(400) para informações sobre parâmetros ausentes.
 3. Atualize sua requisição com os parâmetros necessários. Não deixe parametros desabilitados.

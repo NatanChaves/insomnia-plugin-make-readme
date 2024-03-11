@@ -20,7 +20,7 @@ class ReadmeGenerator {
 
       const response = await contextxRequest.network.sendRequest(request);
 
-      if (response.statusCode > 399 && response.statusCode < 500) {
+      if (response.statusCode == 400) {
         requiredParameters.push(parameters[i].name);
 
         module.exports.requestHooks = [
@@ -36,6 +36,7 @@ class ReadmeGenerator {
     return requiredParameters;
   };
 
+  //define a variável global da url se estiver vazia
   setUrlParameter = (request) => {
     if (this.urlPrincipal != "") {
       this.urlPrincipal = request.url;
@@ -116,14 +117,52 @@ class ReadmeGenerator {
     `;
   };
 
+  //Definir url corretamente quando está armazenada em uma variável de ambiente
+  setUrlByEnvironmentVariable = async (contextxRequest, request) => {
+    var variable = this.getVariableName(request.url);
+    var path = this.getPathByUrl(request.url);
+
+    console.log(`Path:${path}`)
+    module.exports.requestHooks = [
+      (context) => {
+        this.urlPrincipal = context.request.getEnvironmentVariable(variable) + path;
+        console.log(this.urlPrincipal)
+      },
+    ];
+    
+    if (variable != undefined) {
+      const response = await contextxRequest.network.sendRequest(request);
+    }
+  };
+
+  //retorna nome da variável de ambiente
+  getVariableName = (value) => {
+    const regex = /\{\{(.*?)\}\}/;
+    let chave;
+
+    if (value.match(regex) != null) {
+      chave = value.match(regex)[1];
+    }
+    return chave;
+  };
+
+  //Retorna o path da url
+  getPathByUrl = (value) => {
+    var pattern = /{{([^}]*)}}(.*)/;
+    let chave;
+
+    if (value.match(pattern) != null) {
+      chave = value.match(pattern)[2];
+    }
+
+    return chave;
+  }
 
   // Função principal para gerar a caixa de diálogo Readme
   generateReadmeDialog = async (contextxRequest, data) => {
     let request = null;
     let code = document.createElement("code");
-
     for (let i = 0; i < data.length; i++) {
-
       request = data[i];
 
       if (request == undefined) request = data;
@@ -149,19 +188,11 @@ class ReadmeGenerator {
           "Valores esperados",
         ]);
       }
-
-      if (request.method == "POST") {
-        this.setUrlParameter(request);
+      this.setUrlParameter(request);
+      await this.setUrlByEnvironmentVariable(contextxRequest, request);
+      
+      if (request.method == "POST" || request.method == "PUT") {
         body = request.body.text;
-      }
-
-      if (request.method == "PUT") {
-        this.setUrlParameter(request);
-        body = request.body.text;
-      }
-
-      if (request.method == "DELETE") {
-        this.setUrlParameter(request);
       }
 
       const regex = /https?:\/\/[^\/]+(\/[^?#]*)/;
@@ -181,11 +212,8 @@ class ReadmeGenerator {
         body
       );
 
-      code.innerHTML += html + '<br> <br>';
+      code.innerHTML += html + "<br> <br>";
     }
-
-    console.log('passei aqui')
-    console.log(code)
 
     code.style.userSelect = "all";
     contextxRequest.app.dialog(`Readme`, code);
@@ -195,7 +223,13 @@ class ReadmeGenerator {
 // Criando uma instância da classe ReadmeGenerator
 const readmeGenerator = new ReadmeGenerator();
 
-// Iniciando action do plugin
+module.exports.requestHooks = [
+  (context) => {
+    console.log(context.request.getEnvironmentVariable("URL"));
+  },
+];
+
+// Módulo do insomnia para request
 module.exports.requestActions = [
   {
     label: "Generate Read.me",
@@ -203,15 +237,12 @@ module.exports.requestActions = [
       const { request } = data;
       let incluirArray = [];
       incluirArray.push(request);
-      readmeGenerator.generateReadmeDialog(
-        contextxRequest,
-        incluirArray
-      );
-      
+      readmeGenerator.generateReadmeDialog(contextxRequest, incluirArray);
     },
   },
 ];
 
+//módulo do insomnia para pasta de requests
 module.exports.requestGroupActions = [
   {
     label: "Generate Complete Read.me",
