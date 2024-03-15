@@ -1,6 +1,7 @@
 class ReadmeGenerator {
   constructor() {
     this.urlPrincipal = "";
+    this.data;
   }
 
   // Função para validar a obrigatoriedade de cada parâmetro
@@ -45,6 +46,9 @@ class ReadmeGenerator {
 
   //identifica quais campos sao obrigatorios
   addRequiredParamColumn = (parameters, requiredParameters) => {
+
+    console.log(parameters);
+    
     parameters.forEach((item) => {
       item.obrigatorio = "Não";
 
@@ -57,9 +61,9 @@ class ReadmeGenerator {
   };
 
   //adiciona coluna de descricao
-  addDescriptionParamColumn = (parameters) => {
+  addDescriptionParamColumnAndValues = (parameters) => {
     parameters.forEach((element) => {
-      element.descricao = "Descricao do campo explicando sua funcionalidade";
+      element.descricao = this.data[element.name] == undefined ?  "Descricao do campo explicando sua funcionalidade" : this.data[element.name];
     });
   };
 
@@ -122,14 +126,13 @@ class ReadmeGenerator {
     var variable = this.getVariableName(request.url);
     var path = this.getPathByUrl(request.url);
 
-    console.log(`Path:${path}`)
     module.exports.requestHooks = [
       (context) => {
-        this.urlPrincipal = context.request.getEnvironmentVariable(variable) + path;
-        console.log(this.urlPrincipal)
+        this.urlPrincipal =
+          context.request.getEnvironmentVariable(variable) + path;
       },
     ];
-    
+
     if (variable != undefined) {
       const response = await contextxRequest.network.sendRequest(request);
     }
@@ -156,10 +159,39 @@ class ReadmeGenerator {
     }
 
     return chave;
-  }
+  };
+
+  // Retorna arquivo fonte com descricao dos campos json
+  readJSONFromFile = (filename, callback) => {
+    const fs = require("fs");
+
+    fs.readFile(filename, "utf8", (err, data) => {
+      if (err) {
+        callback(err, null);
+        return;
+      }
+
+      try {
+        const jsonData = JSON.parse(data);
+        callback(null, jsonData);
+      } catch (parseError) {
+        callback(parseError, null);
+      }
+    });
+  };
 
   // Função principal para gerar a caixa de diálogo Readme
   generateReadmeDialog = async (contextxRequest, data) => {
+
+    const filename = "C:\\Users\\Public\\Documents\\data.json";
+    this.readJSONFromFile(filename, (error, jsonData) => {
+      if (error) {
+        console.error("Error reading JSON file:", error);
+        return;
+      }
+      this.data = jsonData;
+    });
+
     let request = null;
     let code = document.createElement("code");
     for (let i = 0; i < data.length; i++) {
@@ -173,12 +205,13 @@ class ReadmeGenerator {
       let body = "";
 
       if (request.method == "GET") {
+        console.log(request.parameters)
         requiredParameters = this.addRequiredParamColumn(
           request.parameters.filter((objeto) => objeto.disabled == false),
           await this.validateParameters(contextxRequest, request)
         );
 
-        this.addDescriptionParamColumn(requiredParameters);
+        this.addDescriptionParamColumnAndValues(requiredParameters);
 
         parametrosTable = this.generateTable(requiredParameters, [
           "name",
@@ -190,7 +223,7 @@ class ReadmeGenerator {
       }
       this.setUrlParameter(request);
       await this.setUrlByEnvironmentVariable(contextxRequest, request);
-      
+
       if (request.method == "POST" || request.method == "PUT") {
         body = request.body.text;
       }
@@ -222,12 +255,6 @@ class ReadmeGenerator {
 
 // Criando uma instância da classe ReadmeGenerator
 const readmeGenerator = new ReadmeGenerator();
-
-module.exports.requestHooks = [
-  (context) => {
-    console.log(context.request.getEnvironmentVariable("URL"));
-  },
-];
 
 // Módulo do insomnia para request
 module.exports.requestActions = [

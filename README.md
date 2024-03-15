@@ -25,6 +25,7 @@ Readme Maker é um plugin para o Insomnia que transforma requisições e gera RE
 1. Abra a requisição que deseja transformar.
 2. Encontre e execute "Generate Read.me" na barra de ferramentas da request ou da pasta no insomnia.
 3. O README transformado será gerado.
+4. Automatize o preenchimento das informações de parametros em métodos GET em: C:\Users\Public\Documents\data.json 
 
 ### Validação de Parâmetros (Requisições GET)
 
